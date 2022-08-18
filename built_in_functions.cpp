@@ -25,7 +25,7 @@ struct Functions
 
 struct Function
 {
-	std::string *ptr_f_name = nullptr;
+	std::string function_name = "";
 	int args_number = 0;
 	std::map<std::string, Expr> function_vars = {};
 	std::vector<Expr> m_instructions = {};
@@ -34,7 +34,7 @@ struct Function
 	{}
 
 	Function(std::string arg_name)
-		:ptr_f_name(&arg_name)
+		:function_name(arg_name)
 	{}
 
 	void set_function_args(Expr& f_args)
@@ -58,15 +58,15 @@ struct Function
 	void set_function_body(std::vector<Expr>::iterator& begin, std::vector<Expr>::iterator& end)
 	{
 		while(begin != end + 1) {
-			m_instructions.push_back(*begin);
+			m_instructions.push_back(Expr(*begin));
 		}
 	}
 
 	void set_function_instructions(std::vector<Expr>& instructions_vec)
 	{
-		for(auto& each_instruction: instructions_vec)
+		for(auto each_instruction: instructions_vec)
 		{
-			m_instructions.push_back(each_instruction);
+			m_instructions.push_back(Expr(each_instruction));
 		}
 	}
 
@@ -126,7 +126,9 @@ void defun(std::vector<Expr>& arg_obj_vac)
 	//Functions.functions_map.insert_or_assign(arg_obj_vac[0].get_obj_value(), foo);
 	auto it = functions.functions_map.find(arg_obj_vac[0].get_obj_value());
 	if (it == functions.functions_map.end()) {
-		functions.functions_map.insert(std::make_pair(arg_obj_vac[0].get_obj_value(), foo));
+
+		//functions.functions_map.insert(std::make_pair(function_name, foo));
+
 	} else {
 		std::cerr << "redefinition of  '"  << arg_obj_vac[0].get_obj_value() << "'  function" << std::endl;
 	}
@@ -174,7 +176,7 @@ Expr setq(Expr& rightside)
 	return Expr(obj_to_return);
 }
 
-Expr print(const Expr& arg_obj)
+Expr print(Expr& arg_obj)
 {
 	Expr tmp_obj = arg_obj.resolve();
 	tmp_obj.set_var_type(tmp_obj.get_var_value());
@@ -183,7 +185,7 @@ Expr print(const Expr& arg_obj)
 	} else if("string" == tmp_obj.get_var_type()) {
 		std::cout << tmp_obj.get_var_value() << std::endl;
 	} else {
-		std::cout << arg_obj.get_obj_value() << std::endl;
+		std::cout << tmp_obj.get_obj_value() << std::endl;
 	}
 	return Expr();
 }

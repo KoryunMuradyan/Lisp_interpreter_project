@@ -25,6 +25,6 @@ Expr let(std::vector<Expr>&);
 
 Expr setq(Expr&);
 
-Expr print(const Expr&);
+Expr print(Expr&);
 
 #endif   //  __BUILT__IN__FUNCTIONS__HPP__

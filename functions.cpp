@@ -8,6 +8,8 @@
 #include <string>
 #include "vector"
 
+(print (let ((c 1)) (let* ((c 2) (a (+ c 1))) a)))
+
 typedef std::vector<std::string> token_vec;
 
 void interprate(std::vector<Expr>& modules_vec)
