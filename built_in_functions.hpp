@@ -17,7 +17,7 @@ struct Function;
 
 std::string type_of(Expr&);
 
-Expr defun(std::vector<Expr>&);
+void defun(std::vector<Expr>&);
 
 /*
 Expr let(std::vector<Expr>&);

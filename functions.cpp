@@ -20,13 +20,15 @@ void interprate(std::vector<Expr>& modules_vec)
 		if(my_keys.keywords_set.find(tmp_value) == my_keys.keywords_set.end) {
 			run_built_in_foo()
 		}
-		if("setq" == tmp_value) {
+		if ("setq" == tmp_value) {
 			auto it = function_vars.find(tmp_vec[1].get_obj_value());
 			function_vars.insert_or_assign(tmp_vec[1].get_obj_value(), setq(tmp_vec[2]));
 			continue;
-		} else if("print" == tmp_value) {
+		} else if ("print" == tmp_value) {
 			print(tmp_vec[1]);
 			continue;
+		} else if ("defun" == tmp_value) {
+			defun(std::vector<Expr>(tmp_vec.begin() + 1, tmp_vec.end()));
 		}
 		/*
 		   std::vector<Expr> operands_vec(tmp_vec.begin() + 1, tmp_vec.end());
