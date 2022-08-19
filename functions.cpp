@@ -1,5 +1,8 @@
+
+#include "keys.hpp"
 #include "expr.hpp"
 #include "functions.hpp"
+#include "built_in_functions.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -8,14 +11,15 @@
 #include <string>
 #include "vector"
 
-(print (let ((c 1)) (let* ((c 2) (a (+ c 1))) a)))
+
+////d/////////////////(print (let ((c 1)) (let* ((c 2) (a (+ c 1))) a)))
 
 typedef std::vector<std::string> token_vec;
 
-void interprate(std::vector<Expr>& modules_vec)
+void interprate(std::vector<Expr>& modules_vector)
 {
 	auto it_begin = modules_vector.begin();
-	while(it_begin != m_instructions.end())
+	while(it_begin != modules_vector.end())
 	{
 		auto tmp_vec = it_begin->get_args_vec();
 		auto tmp_value = tmp_vec[0].get_obj_value();
@@ -117,10 +121,10 @@ float find_GCD(float arg_num_1, float arg_num_2)
 
 float str_to_number(const std::string& numeric_str) 
 {
-   stringstream ss; 
-   float num;
-   ss << numeric_str;
-   ss >> num;
+	std::stringstream ss; 
+	float num;
+	ss << numeric_str;
+	ss >> num;
 }
 
 bool is_number(const std::string& arg_str)
