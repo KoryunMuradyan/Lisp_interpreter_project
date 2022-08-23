@@ -12,11 +12,11 @@ export TEMP_FILES := $(OBJ_FILES) $(DEP_FILES) $(EXECUTABLE)
 
 $(EXECUTABLE) : $(OBJ_FILES)
 	@echo "Linking the executable"
-	@gcc --std=c++2a $(DEBUG_FLAGS) $^  /usr/lib/gcc/x86_64-linux-gnu/9/libstdc++.a -o $@ -lm
+	@g++ -std=c++17  $^  -o $@
 
 %.o:
 	@echo "Compiling $<"
-	gcc $(DEBUG_FLAGS) -c $< -o $@
+	@gcc -std=c++17 $(DEBUG_FLAGS) -c $< -o $@
 
 %.dep: %.cpp
 	@echo "Generating depdendencies for $<"

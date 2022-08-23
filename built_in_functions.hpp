@@ -1,8 +1,6 @@
 #ifndef __BUILT__IN__FUNCTIONS__HPP__
 #define __BUILT__IN__FUNCTIONS__HPP__
 
-//#include "keys.hpp"
-#include "expr.hpp"
 #include <string>
 #include <vector>
 #include <set>
@@ -12,12 +10,11 @@ class Expr;
 
 struct Functions;
 
-struct Function;
-
 std::string type_of(Expr&);
 
 void defun(std::vector<Expr>&);
 
+bool lisp_if(Expr&);
 /*
 Expr let(std::vector<Expr>&);
 */

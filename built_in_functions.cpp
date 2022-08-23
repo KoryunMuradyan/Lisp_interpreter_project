@@ -1,14 +1,19 @@
-#include "keys.hpp"
-#include "built_in_functions.hpp"
-#include "functions.hpp"
 #include <set>
 #include <map>
+#include "expr.hpp"
+#include "expr.hpp"
+#include "functions.hpp"
+#include "built_in_functions.hpp"
+#include <vector>
 #include <iostream>
 #include <string>
 #include <sstream> 
 
-/*
-*/
+struct Function;
+extern std::map<std::string, Function> functions_map;
+extern std::map<std::string, Expr> declared_vars;
+extern std::set<std::string> math_op_set;
+extern std::set<std::string> keywords_set;
 
 struct Function
 {
@@ -20,7 +25,7 @@ struct Function
 	Function()
 	{}
 
-	Function(std::string arg_name)
+	Function(const std::string& arg_name)
 		:function_name(arg_name)
 	{}
 
@@ -56,90 +61,134 @@ struct Function
 			m_instructions.push_back(Expr(each_instruction));
 		}
 	}
+};
 
-	void run_function(std::vector<Expr> function_arguments)
+std::map<std::string, Function> functions_map  =  {};
+std::set<std::string> math_op_set = {"+", "-", "/", "*", "<", ">", ">=", "<="};
+std::set<std::string> keywords_set = {"defun", "setq", "let", "print", "if", "loop", "type-of"};
+std::map<std::string, Expr> declared_vars = {};
+
+Expr redefine_identifier(Expr& arg_obj, std::map<std::string, Expr>& vars)
+{
+	auto it = vars.find(arg_obj.get_obj_value());
+	if (it != vars.end())
 	{
-		auto it_begin = m_instructions.begin();
-		while(it_begin != m_instructions.end())
-		{
-			auto tmp_vec = it_begin->get_args_vec();
-			auto tmp_value = tmp_vec[0].get_obj_value();
-			if (my_keys.keywords_set.find(tmp_value) != my_keys.keywords_set.end()) {
-				m_instructions.push_back(it_begin->resolve());
-			}
-			if ("setq" == tmp_value) {
-				auto it = function_vars.find(tmp_vec[1].get_obj_value());
-				if (it == function_vars.find(tmp_vec[1].get_obj_value())) {
-					function_vars.insert(std::make_pair(tmp_vec[1].get_obj_value(), setq(tmp_vec[2])));
-				} else {
-					it->second = setq(tmp_vec[2]);
-					continue;
-				}
-			} else if ("print" == tmp_value) {
-				print(tmp_vec[1]);
+		arg_obj = it->second;
+	}
+}
+
+Expr redefine(Expr& arg_obj, std::map<std::string, Expr>& vars)
+{
+	auto vec = arg_obj.get_args_vec();
+	for (auto& each_obj: vec)
+	{
+		redefine_identifier(each_obj, vars);
+	}
+	return arg_obj;
+}
+
+void run_function(std::vector<Expr> function_arguments, Function& foo)
+{
+	for(auto each_arg: function_arguments)
+	{
+		foo.set_function_vars(each_arg);
+	}
+	auto it_begin = foo.m_instructions.begin();
+	while(it_begin != foo.m_instructions.end())
+	{
+		auto tmp_vec = it_begin->get_args_vec();
+		auto tmp_value = tmp_vec[0].get_obj_value();
+		if ("setq" == tmp_value) {
+			auto it = foo.function_vars.find(tmp_vec[1].get_obj_value());
+			if (it == foo.function_vars.find(tmp_vec[1].get_obj_value())) {
+				foo.function_vars.insert(std::make_pair(tmp_vec[1].get_obj_value(), setq(tmp_vec[2])));
+			} else {
+				it->second = setq(tmp_vec[2]);
 				continue;
 			}
-			/*
-			std::vector<Expr> operands_vec(tmp_vec.begin() + 1, tmp_vec.end());
-			Expr tmp_var("");
-			*/
-			if (my_keys.math_op_set.find(tmp_value) != my_keys.math_op_set.end()) {
-				Expr tmp_obj(it_begin->resolve());
-				tmp_obj.set_var_value(tmp_obj.get_var_value());
-				tmp_obj.set_var_type(tmp_obj.get_var_value());
-			} else if (functions.functions_map.end() != functions.functions_map.find(tmp_value)) {
-				auto it = functions.functions_map.find(tmp_value);
-				auto it_2 = tmp_vec.begin() + 1;
-				it->second.run_function(std::vector<Expr>(it_2, tmp_vec.end()));
+		} else if ("print" == tmp_value) {
+			if (list == tmp_vec[1].get_obj_type()) {
+				tmp_vec[1] = redefine(tmp_vec[1], foo.function_vars);
+			} else {
+
+				tmp_vec[1] = redefine_identifier(tmp_vec[1], foo.function_vars);
 			}
+			print(tmp_vec[1]);
+			++it_begin;
+			continue;
+		}
+		if (math_op_set.find(tmp_value) != math_op_set.end()) {
+			Expr tmp_obj(it_begin->resolve());
+			tmp_obj.set_var_value(tmp_obj.get_var_value());
+			tmp_obj.set_var_type(tmp_obj.get_var_value());
+		} else if (functions_map.end() != functions_map.find(tmp_value)) {
+			auto it = functions_map.find(tmp_value);
+			auto it_2 = tmp_vec.begin() + 1;
+			run_function(std::vector<Expr>(it_2, tmp_vec.end()), it->second);
 		}
 	}
-};
+}
+
+void call_built_in_functions(std::string& tmp_value, std::vector<Expr>& tmp_vec)
+{
+	if ("if" == tmp_value) {
+		std::vector<Expr> new_vec = {};
+		if (lisp_if(tmp_vec[1])) {
+			new_vec.push_back(std::move(tmp_vec[2]));
+		} else {
+			new_vec.push_back(std::move(tmp_vec[3]));
+		}
+		interprate(std::move(new_vec));
+	} else if ("setq" == tmp_value) {
+		declared_vars.insert_or_assign(tmp_vec[1].get_obj_value(), 
+				setq(tmp_vec[2]));
+	} else if ("print" == tmp_value) {
+		print(tmp_vec[1]);
+	} else if ("defun" == tmp_value) {
+		auto it =  tmp_vec.begin() + 1;
+		auto tmp_vector = std::vector<Expr>(it, tmp_vec.end());
+		defun(tmp_vector);
+	}
+}
+
+void interprate(std::vector<Expr>&& modules_vector)
+{
+	auto it_begin = modules_vector.begin();
+	while(it_begin != modules_vector.end())
+	{
+		std::vector<Expr> tmp_vec = it_begin->get_args_vec();
+		std::string tmp_value = tmp_vec[0].get_obj_value();
+		if (keywords_set.find(tmp_value) != keywords_set.end()) {
+			call_built_in_functions(tmp_value, tmp_vec);
+			++it_begin;
+			continue;
+		}
+		if (math_op_set.find(tmp_value) != math_op_set.end()) {
+			Expr tmp_obj(it_begin->resolve());
+		} else if (functions_map.end() != functions_map.find(tmp_value)) {
+			auto it = functions_map.find(tmp_value);
+			auto it_2 = tmp_vec.begin() + 1;
+			run_function(std::vector<Expr>(it_2, tmp_vec.end()), it->second);
+		}
+		++it_begin;
+	}
+}
 
 void defun(std::vector<Expr>& arg_obj_vac)
 {
-	Function foo;
-	foo = Function(arg_obj_vac[0].get_obj_value());
+	Function foo(arg_obj_vac[0].get_obj_value());
 	foo.set_function_args(arg_obj_vac[1]);
-	std::vector<Expr> instructions_vec = arg_obj_vac[2].get_args_vec();
+	std::vector<Expr> instructions_vec(arg_obj_vac.begin() + 2, arg_obj_vac.end());
 	foo.set_function_instructions(instructions_vec);
-	/*
-	for(Expr& obj: arg_obj_vac) {
-		if("setf" == obj.get_obj_value()) {
-			foo.set_function_vars()   //   (write ((lambda (a b c x)(print 77777))4 2 9 3))
-		}
-	}
-	*/
-	//Functions.functions_map.insert_or_assign(arg_obj_vac[0].get_obj_value(), foo);
-	auto it = functions.functions_map.find(arg_obj_vac[0].get_obj_value());
-	if (it == functions.functions_map.end()) {
-
-		//functions.functions_map.insert(std::make_pair(function_name, foo));
-
-	} else {
+	auto it = functions_map.find(arg_obj_vac[0].get_obj_value());
+	std::string function_name = "";
+	function_name = arg_obj_vac[0].get_obj_value();
+	if (it != functions_map.end()) {
 		std::cerr << "redefinition of  '"  << arg_obj_vac[0].get_obj_value() << "'  function" << std::endl;
+		return;
 	}
-	/*
-	   Function foo;
-	   if("" != arg_obj_vac[0].get_obj_value() && 1 != arg_obj_vac[0].get_obj_type()) {
-	   foo = Function(arg_obj_vac[0].get_obj_value());
-	   foo.set_function_args(arg_obj_vac[1]);
-	   } else {
-	   for(Expr& obj: arg_obj_vac) {
-	   set_function_vars(obj);
-	   }
-	   foo.set_function_vars(arg_obj_vac[0])
-	   }
-	   for(Expr& obj: arg_obj_vac) {
-	   if("setf" == obj.get_obj_value()) {
-	   foo.set_function_vars()   //   (write ((lambda (a b c x)(print 77777))4 2 9 3))
-	   }
-	   }
-	   Functions.functions_map.insert_or_assign(arg_obj_vac[0].get_obj_value(), foo);
-	   */
+	functions_map.insert_or_assign(std::move(function_name), std::move(foo));
 }
-
-
 
 std::string type_of(Expr& arg_obj)
 {	
@@ -147,13 +196,6 @@ std::string type_of(Expr& arg_obj)
 	arg_obj.set_var_type(arg_obj.get_var_value());
 	return(arg_obj.get_var_type());
 }
-
-/*
-Expr let(std::vector<Expr>& arg_obj_vac)
-{
-	
-}
-*/
 
 Expr setq(Expr& rightside)
 {
@@ -177,3 +219,9 @@ Expr print(Expr& arg_obj)
 	return Expr();
 }
 
+bool lisp_if(Expr& lisp_bool)
+{
+	lisp_bool.resolve();
+	lisp_bool.set_var_value(lisp_bool.get_obj_value());
+	return("#t" == lisp_bool.get_var_value());
+}

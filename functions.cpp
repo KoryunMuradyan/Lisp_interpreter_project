@@ -1,8 +1,9 @@
-
-#include "keys.hpp"
 #include "expr.hpp"
 #include "functions.hpp"
 #include "built_in_functions.hpp"
+extern std::map<std::string, Expr> declared_vars;
+extern std::set<std::string> math_op_set;
+extern std::set<std::string> keywords_set;
 
 #include <algorithm>
 #include <sstream>
@@ -11,43 +12,7 @@
 #include <string>
 #include "vector"
 
-
-////d/////////////////(print (let ((c 1)) (let* ((c 2) (a (+ c 1))) a)))
-
 typedef std::vector<std::string> token_vec;
-
-void interprate(std::vector<Expr>& modules_vector)
-{
-	auto it_begin = modules_vector.begin();
-	while(it_begin != modules_vector.end())
-	{
-		auto tmp_vec = it_begin->get_args_vec();
-		auto tmp_value = tmp_vec[0].get_obj_value();
-		if(my_keys.keywords_set.find(tmp_value) == my_keys.keywords_set.end) {
-			run_built_in_foo()
-		}
-		if ("setq" == tmp_value) {
-			auto it = function_vars.find(tmp_vec[1].get_obj_value());
-			function_vars.insert_or_assign(tmp_vec[1].get_obj_value(), setq(tmp_vec[2]));
-			continue;
-		} else if ("print" == tmp_value) {
-			print(tmp_vec[1]);
-			continue;
-		} else if ("defun" == tmp_value) {
-			defun(std::vector<Expr>(tmp_vec.begin() + 1, tmp_vec.end()));
-		}
-		/*
-		   std::vector<Expr> operands_vec(tmp_vec.begin() + 1, tmp_vec.end());
-		   Expr tmp_var("");
-		   */
-		if (my_keys.math_op_set.find(tmp_value) != my_keys.math_op_set.end()) {
-			Expr tmp_obj(it_begin->resolve);
-		} else if (functions.functions_map.end() != functions.functions_map.find(tmp_value)) {
-			auto it = functions.functions_map.find(tmp_value);
-			it->second.run_function(std::vector<Expr>(it->begin() + 1, it->end()));
-		}
-	}
-}
 
 std::string read_script(const std::string& filename) 
 {
@@ -125,10 +90,14 @@ float str_to_number(const std::string& numeric_str)
 	float num;
 	ss << numeric_str;
 	ss >> num;
+	return num;
 }
 
 bool is_number(const std::string& arg_str)
 {
+	if("" == arg_str) {
+		return false;
+	}
 	for(char ch: arg_str)
 	{
 		if(ch < '0' || ch > '9') {

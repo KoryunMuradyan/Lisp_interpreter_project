@@ -1,6 +1,6 @@
 #ifndef __DECLARATIONS__HPP__
 #define __DECLARATIONS__HPP__
-//#include "class.hpp"
+
 #include <vector>
 #include <string>
 
@@ -8,7 +8,7 @@ class Expr;
 
 typedef std::vector<std::string> token_vec;
 
-void interprate(std::vector<Expr>&);
+void interprate(std::vector<Expr>&&);
 
 token_vec::iterator find_coobrace(token_vec::iterator&);
 token_vec tokenize_script(const std::string&);

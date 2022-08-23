@@ -1,8 +1,6 @@
 #ifndef __CLASS__DECLARATION__HPP__
 #define __CLASS__DECLARATION__HPP__
 
-#include "built_in_functions.hpp"
-#include "functions.hpp"
 #include <vector>
 #include <iterator>
 #include <iostream>
@@ -19,7 +17,6 @@ class Expr
 		int m_this_obj_type = -1;
 		std::string m_var_type = "";
 		std::string m_var_value = "";
-		static int obj_num;  // technical purpose...  to be teleted
 
 		friend bool is_number(const std::string&);
 		friend bool is_bool(const std::string&);
@@ -28,12 +25,10 @@ class Expr
 		friend bool is_literal(const std::string&);
 		friend token_vec::iterator find_coobrace(token_vec::iterator&);
 	public:
-		Expr()
-		{}
+		Expr() {}
 
 		Expr(Expr&);
 		Expr(std::vector<Expr>&);
-		//Expr(const Expr&);
 		Expr(Expr&&);
 		Expr(token_vec::iterator&, token_vec::iterator&);
 		Expr(const std::string&);
@@ -44,18 +39,21 @@ class Expr
 		Expr operator/(Expr);
 		Expr operator<(Expr);
 		Expr operator>(Expr);
-		Expr operator=(Expr);
+		Expr operator==(Expr);
 		Expr operator<=(Expr);
 		Expr operator>=(Expr);
 		Expr And(std::vector<Expr>&);
 		Expr Or(std::vector<Expr>&);
 		Expr Not(Expr&);
 
+		void arithmetic_solve(Expr& , std::string&, std::vector<Expr>&);
+
 		int get_obj_type();
 		std::string get_var_type();
 		std::string get_obj_value();
 		std::string get_var_value();
 		Expr resolve();
+		void set_obj_value(const std::string&);
 		void set_var_type(const std::string&);
 		void set_string(const std::string&);
 		void set_var_value(const std::string&);
@@ -63,6 +61,7 @@ class Expr
 		void define_type(const std::string&);
 		void define_obj_vector(token_vec::iterator&, token_vec::iterator&);
 		std::vector<Expr> get_args_vec();
+		Expr operator= (Expr);
 
 };
 
